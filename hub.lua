@@ -8,7 +8,6 @@ local Stats = game:GetService("Stats")
 local HttpService = game:GetService("HttpService")
 local SoundService = game:GetService("SoundService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local StarterGui = game:GetService("StarterGui")
 
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
@@ -25,7 +24,7 @@ local oldOverlay = playerGui:FindFirstChild("SableVisualsOverlay")
 if oldOverlay then oldOverlay:Destroy() end
 
 -------------------------------------------------------------------
--- CONFIGURATION GLOBALE & SYSTÈME DE CLÉS (MONÉTISATION)
+-- CONFIGURATION GLOBALE & SYSTÈMES
 -------------------------------------------------------------------
 local KEY_SYSTEM_ENABLED = true 
 local KEY_URL = "https://raw.githubusercontent.com/Txnso/rcruel-hub/refs/heads/main/key.json"
@@ -127,7 +126,7 @@ hitAudio.Volume = 1
 hitAudio.Parent = SoundService
 
 -------------------------------------------------------------------
--- FONCTIONS DU MOTEUR (CORRECTION TEAM CHECK)
+-- FONCTIONS DU MOTEUR (TEAM CHECK CORRIGÉ)
 -------------------------------------------------------------------
 local function isPlayerAlive(p)
     if not p or not p.Character then return false end
@@ -138,27 +137,8 @@ end
 local function isTeamMate(p)
     if not config.teamCheck then return false end
     if p == localPlayer then return true end
-    
-    -- Vérification par l'équipe native Roblox
-    if p.Team and localPlayer.Team and p.Team == localPlayer.Team then
-        return true
-    end
-    
-    -- Vérification alternative via les couleurs de Team (souvent utilisée dans les jeux de tir)
-    if p.TeamColor and localPlayer.TeamColor and p.TeamColor == localPlayer.TeamColor then
-        return true
-    end
-
-    -- Vérification par attributs de couleur de character si l'équipe native est neutre
-    if p.Character and localPlayer.Character then
-        local myRoot = localPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local pRoot = p.Character:FindFirstChild("HumanoidRootPart")
-        if myRoot and pRoot then
-            -- Si les briques ou team color s'accordent
-            if p.TeamColor == localPlayer.TeamColor then return true end
-        end
-    end
-
+    if p.Team and localPlayer.Team and p.Team == localPlayer.Team then return true end
+    if p.TeamColor and localPlayer.TeamColor and p.TeamColor == localPlayer.TeamColor then return true end
     return false
 end
 
@@ -1416,7 +1396,7 @@ local function buildMainHub()
 end
 
 -------------------------------------------------------------------
--- CONSTRUCTION DU SYSTÈME DE CLÉS (MODIFIÉ : TOUT EN ANGLAIS + DISCORD)
+-- CONSTRUCTION DU SYSTÈME DE CLÉS (ENGLISH + BOUTON DISCORD)
 -------------------------------------------------------------------
 local function buildKeySystem()
     local keyGui = Instance.new("ScreenGui")
@@ -1431,7 +1411,7 @@ local function buildKeySystem()
     keyFrame.BorderSizePixel = 0
     keyFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     keyFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    keyFrame.Size = UDim2.new(0, 380, 0, 260) -- Agrandit légèrement pour loger le 3e bouton
+    keyFrame.Size = UDim2.new(0, 380, 0, 260)
     local kfc = Instance.new("UICorner", keyFrame); kfc.CornerRadius = UDim.new(0, 10)
     local kfs = Instance.new("UIStroke", keyFrame); kfs.Color = Color3.fromRGB(38, 44, 58); kfs.Thickness = 1.5
 
@@ -1466,7 +1446,7 @@ local function buildKeySystem()
     textBox.Size = UDim2.new(1, -48, 0, 36)
     local tbc = Instance.new("UICorner", textBox); tbc.CornerRadius = UDim.new(0, 6)
 
-    -- Bouton 1 : Vérifier la clé
+    -- Button 1: Verify Key
     local verifyBtn = Instance.new("TextButton", keyFrame)
     verifyBtn.Text = "VERIFY KEY"
     verifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1478,7 +1458,7 @@ local function buildKeySystem()
     verifyBtn.Size = UDim2.new(0.5, -28, 0, 32)
     local vbc = Instance.new("UICorner", verifyBtn); vbc.CornerRadius = UDim.new(0, 6)
 
-    -- Bouton 2 : Obtenir la clé
+    -- Button 2: Get Key
     local getKeyBtn = Instance.new("TextButton", keyFrame)
     getKeyBtn.Text = "GET KEY"
     getKeyBtn.TextColor3 = Color3.fromRGB(200, 205, 220)
@@ -1490,7 +1470,7 @@ local function buildKeySystem()
     getKeyBtn.Size = UDim2.new(0.5, -28, 0, 32)
     local gbc = Instance.new("UICorner", getKeyBtn); gbc.CornerRadius = UDim.new(0, 6)
 
-    -- Bouton 3 : Rejoindre le Discord
+    -- Button 3: Join Discord
     local discordBtn = Instance.new("TextButton", keyFrame)
     discordBtn.Text = "JOIN DISCORD"
     discordBtn.TextColor3 = Color3.fromRGB(114, 137, 218)
@@ -1542,17 +1522,13 @@ local function buildKeySystem()
     end)
 
     getKeyBtn.MouseButton1Click:Connect(function()
-        pcall(function()
-            setclipboard(LINK_GET_KEY)
-        end)
+        pcall(function() setclipboard(LINK_GET_KEY) end)
         statusLabel.TextColor3 = Color3.fromRGB(30, 120, 255)
         statusLabel.Text = "Link copied to clipboard!"
     end)
 
     discordBtn.MouseButton1Click:Connect(function()
-        pcall(function()
-            setclipboard(DISCORD_INVITE)
-        end)
+        pcall(function() setclipboard(DISCORD_INVITE) end)
         statusLabel.TextColor3 = Color3.fromRGB(114, 137, 218)
         statusLabel.Text = "Discord invite copied to clipboard!"
     end)
