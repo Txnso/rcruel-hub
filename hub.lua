@@ -436,7 +436,7 @@ local function buildMainHub()
     contentArea.Size = UDim2.new(1, -175, 1, -62)
 
     -------------------------------------------------------------------
-    -- GESTION DES PAGES ET NAVIGATION (Ajout de l'onglet Config)
+    -- GESTION DES PAGES ET NAVIGATION (Avec l'onglet Config séparé)
     -------------------------------------------------------------------
     local pages = {}
     local tabButtons = {}
@@ -896,7 +896,7 @@ local function buildMainHub()
     -- Settings (Performance uniquement)
     addToggleSwitch(settingsPage, "performanceMode", "Mode Performance (FPS Boost)", function(v) setPerformanceMode(v) end)
 
-    -- Config (Sauvegarde complète avec prise en charge des enums/keys)
+    -- Config (Sauvegarde complète)
     local function addActionButton(parent, titleText, color, callback)
         local btn = Instance.new("TextButton", parent)
         btn.Text = titleText
@@ -1415,9 +1415,42 @@ local function buildMainHub()
 end
 
 -------------------------------------------------------------------
--- CONSTRUCTION DU SYSTÈME DE CLÉS (ENGLISH + BOUTON DISCORD)
+-- CONSTRUCTION DU SYSTÈME DE CLÉS (HWID + GITHUB CHECK + DISCORD)
 -------------------------------------------------------------------
 local function buildKeySystem()
+    local HWID_FILE = "rcruel_hwid.json"
+    
+    local function getHWID()
+        local hwidFunc = gethwid or syn_get_hwid or getgenv().gethwid
+        if hwidFunc then
+            local success, id = pcall(hwidFunc)
+            if success and id then return id end
+        end
+        return tostring(game:GetService("RbxAnalyticsService"):GetClientId())
+    end
+
+    if typeof(readfile) == "function" and isfile and isfile(HWID_FILE) then
+        local success, savedData = pcall(function()
+            return HttpService:JSONDecode(readfile(HWID_FILE))
+        end)
+        
+        if success and savedData and savedData.hwid == getHWID() and savedData.key then
+            local netSuccess, netResponse = pcall(function()
+                return HttpService:JSONDecode(game:HttpGet(KEY_URL))
+            end)
+            
+            if netSuccess and netResponse and netResponse.current_key then
+                if savedData.key == netResponse.current_key then
+                    buildMainHub()
+                    return
+                end
+            elseif savedData.key == "KEY_ubsw313bdy7" then
+                buildMainHub()
+                return
+            end
+        end
+    end
+
     local keyGui = Instance.new("ScreenGui")
     keyGui.Name = "SableKeyGui"
     keyGui.ResetOnSpawn = false
@@ -1515,28 +1548,38 @@ local function buildKeySystem()
             return HttpService:JSONDecode(game:HttpGet(KEY_URL))
         end)
         
+        local enteredKey = textBox.Text
+        local isValid = false
+
         if success and response and response.current_key then
-            if textBox.Text == response.current_key then
-                statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
-                statusLabel.Text = "Key valid! Launching hub..."
-                task.wait(0.8)
-                keyGui:Destroy()
-                buildMainHub()
-            else
-                statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
-                statusLabel.Text = "Incorrect key. Please try again."
+            if enteredKey == response.current_key then
+                isValid = true
             end
         else
-            if textBox.Text == "KEY_ubsw313bdy7" then
-                statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
-                statusLabel.Text = "Key valid (Fallback mode)!"
-                task.wait(0.8)
-                keyGui:Destroy()
-                buildMainHub()
-            else
-                statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
-                statusLabel.Text = "Incorrect key or network error."
+            if enteredKey == "KEY_ubsw313bdy7" then
+                isValid = true
             end
+        end
+
+        if isValid then
+            if typeof(writefile) == "function" then
+                pcall(function()
+                    local dataToSave = HttpService:JSONEncode({
+                        hwid = getHWID(),
+                        key = enteredKey
+                    })
+                    writefile(HWID_FILE, dataToSave)
+                end)
+            end
+
+            statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
+            statusLabel.Text = "Key valid! Launching hub..."
+            task.wait(0.8)
+            keyGui:Destroy()
+            buildMainHub()
+        else
+            statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
+            statusLabel.Text = "Incorrect key. Please try again."
         end
     end)
 
