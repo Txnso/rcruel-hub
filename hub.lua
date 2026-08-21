@@ -126,7 +126,7 @@ hitAudio.Volume = 1
 hitAudio.Parent = SoundService
 
 -------------------------------------------------------------------
--- FONCTIONS DU MOTEUR (TEAM CHECK CORRIGÉ)
+-- FONCTIONS DU MOTEUR
 -------------------------------------------------------------------
 local function isPlayerAlive(p)
     if not p or not p.Character then return false end
@@ -436,7 +436,7 @@ local function buildMainHub()
     contentArea.Size = UDim2.new(1, -175, 1, -62)
 
     -------------------------------------------------------------------
-    -- GESTION DES PAGES ET NAVIGATION
+    -- GESTION DES PAGES ET NAVIGATION (Ajout de l'onglet Config)
     -------------------------------------------------------------------
     local pages = {}
     local tabButtons = {}
@@ -465,6 +465,7 @@ local function buildMainHub()
     local visualsPage = createPage("Visuals")
     local playerPage = createPage("Player")
     local settingsPage = createPage("Settings")
+    local configPage = createPage("Config")
 
     local function switchTab(tabName)
         for name, page in pairs(pages) do
@@ -490,7 +491,7 @@ local function buildMainHub()
         btn.AutoButtonColor = false
         btn.BackgroundColor3 = Color3.fromRGB(26, 30, 39)
         btn.BorderSizePixel = 0
-        btn.Size = UDim2.new(1, 0, 0, 32)
+        btn.Size = UDim2.new(1, 0, 0, 30)
         local bc = Instance.new("UICorner", btn); bc.CornerRadius = UDim.new(0, 8)
 
         local lbl = Instance.new("TextLabel", btn)
@@ -516,6 +517,7 @@ local function buildMainHub()
     addTabButton("Visuals")
     addTabButton("Player")
     addTabButton("Settings")
+    addTabButton("Config")
 
     -------------------------------------------------------------------
     -- CRÉATION DES WIDGETS
@@ -716,7 +718,7 @@ local function buildMainHub()
         lbl.Size = UDim2.new(0.6, 0, 1, 0)
 
         local badge = Instance.new("TextButton", row)
-        badge.Text = "MB2"
+        badge.Text = config.aimKeyCode and config.aimKeyCode.Name or (config.aimKeyType == Enum.UserInputType.MouseButton2 and "MB2" or "MB1")
         badge.TextColor3 = Color3.fromRGB(160, 165, 180)
         badge.TextSize = 11
         badge.Font = Enum.Font.GothamBold
@@ -734,12 +736,19 @@ local function buildMainHub()
 
         aimBadgeRef = badge
         uiUpdaters["aimKeyType"] = function(val)
-            if val == Enum.UserInputType.MouseButton2 or val == 1 then
-                config.aimKeyType = Enum.UserInputType.MouseButton2
-                aimBadgeRef.Text = "MB2"
-            elseif val == Enum.UserInputType.MouseButton1 or val == 0 then
-                config.aimKeyType = Enum.UserInputType.MouseButton1
+            config.aimKeyType = val
+            if val == Enum.UserInputType.Keyboard then
+                aimBadgeRef.Text = config.aimKeyCode and config.aimKeyCode.Name or "Key"
+            elseif val == Enum.UserInputType.MouseButton1 then
                 aimBadgeRef.Text = "MB1"
+            elseif val == Enum.UserInputType.MouseButton2 then
+                aimBadgeRef.Text = "MB2"
+            end
+        end
+        uiUpdaters["aimKeyCode"] = function(code)
+            config.aimKeyCode = code
+            if code and config.aimKeyType == Enum.UserInputType.Keyboard then
+                aimBadgeRef.Text = code.Name
             end
         end
     end
@@ -884,8 +893,10 @@ local function buildMainHub()
     addToggleSwitch(playerPage, "noclip", "NoClip (Wallpass)", function(v) end)
     addToggleSwitch(playerPage, "fullbright", "Fullbright", function(v) setFullbright(v) end)
 
+    -- Settings (Performance uniquement)
     addToggleSwitch(settingsPage, "performanceMode", "Mode Performance (FPS Boost)", function(v) setPerformanceMode(v) end)
 
+    -- Config (Sauvegarde complète avec prise en charge des enums/keys)
     local function addActionButton(parent, titleText, color, callback)
         local btn = Instance.new("TextButton", parent)
         btn.Text = titleText
@@ -903,17 +914,23 @@ local function buildMainHub()
 
     local function syncAllUIElements(data)
         for key, val in pairs(data) do
-            if uiUpdaters[key] then
+            if key == "aimKeyType" then
+                if uiUpdaters[key] then uiUpdaters[key](Enum.UserInputType[val] or val) end
+            elseif key == "aimKeyCode" then
+                if val then
+                    if uiUpdaters[key] then uiUpdaters[key](Enum.KeyCode[val] or val) end
+                end
+            elseif uiUpdaters[key] then
                 uiUpdaters[key](val)
             end
         end
     end
 
-    addActionButton(settingsPage, "SAVE CONFIG", Color3.fromRGB(30, 120, 255), function()
+    addActionButton(configPage, "SAVE CONFIG", Color3.fromRGB(30, 120, 255), function()
         local cleanConfig = {}
         for k, v in pairs(config) do
             if typeof(v) == "EnumItem" then
-                cleanConfig[k] = v.Value
+                cleanConfig[k] = v.Name
             else
                 cleanConfig[k] = v
             end
@@ -925,7 +942,7 @@ local function buildMainHub()
         end
     end)
 
-    addActionButton(settingsPage, "LOAD CONFIG", Color3.fromRGB(0, 220, 130), function()
+    addActionButton(configPage, "LOAD CONFIG", Color3.fromRGB(0, 220, 130), function()
         local raw = savedConfigString
         if not raw and typeof(readfile) == "function" and isfile and isfile("rcruel_full_config.json") then
             pcall(function() raw = readfile("rcruel_full_config.json") end)
@@ -939,9 +956,11 @@ local function buildMainHub()
         end
     end)
 
-    addActionButton(settingsPage, "RESET CONFIG", Color3.fromRGB(255, 65, 85), function()
+    addActionButton(configPage, "RESET CONFIG", Color3.fromRGB(255, 65, 85), function()
         local defaults = {
             aimbot = true,
+            aimKeyType = Enum.UserInputType.MouseButton2,
+            aimKeyCode = nil,
             fovRadius = 160,
             smoothness = 1.00,
             targetPart = "Head",
