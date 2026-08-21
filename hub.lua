@@ -88,7 +88,10 @@ local config = {
     cameraFov = 70,
     spinbot = false,
     spinSpeed = 30,
-    fullbright = false
+    fullbright = false,
+
+    -- Settings / Performance
+    performanceMode = false
 }
 
 local isRebindingAimKey = false
@@ -101,7 +104,8 @@ local originalLighting = {
     ClockTime = Lighting.ClockTime,
     FogEnd = Lighting.FogEnd,
     GlobalShadows = Lighting.GlobalShadows,
-    Ambient = Lighting.Ambient
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient
 }
 
 -------------------------------------------------------------------
@@ -188,6 +192,27 @@ local function setFullbright(active)
         Lighting.FogEnd = originalLighting.FogEnd
         Lighting.GlobalShadows = originalLighting.GlobalShadows
         Lighting.Ambient = originalLighting.Ambient
+    end
+end
+
+-- Gestion du Mode Performance (FPS Boost)
+local function setPerformanceMode(active)
+    if active then
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.Reflectance = 0
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
+        end
+    else
+        Lighting.GlobalShadows = originalLighting.GlobalShadows
+        Lighting.FogEnd = originalLighting.FogEnd
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
     end
 end
 
@@ -816,7 +841,9 @@ local function buildMainHub()
     addToggleSwitch(playerPage, "infJump", "Infinite Jump", function(v) end)
     addToggleSwitch(playerPage, "fullbright", "Fullbright", function(v) setFullbright(v) end)
 
-    -- Settings
+    -- Settings & Performance
+    addToggleSwitch(settingsPage, "performanceMode", "Mode Performance (FPS Boost)", function(v) setPerformanceMode(v) end)
+
     local function addActionButton(parent, titleText, color, callback)
         local btn = Instance.new("TextButton", parent)
         btn.Text = titleText
@@ -840,7 +867,6 @@ local function buildMainHub()
         end
     end
 
-    -- Sauvegarde complète de TOUTE la table config
     addActionButton(settingsPage, "SAUVEGARDER CONFIG", Color3.fromRGB(30, 120, 255), function()
         local cleanConfig = {}
         for k, v in pairs(config) do
@@ -857,7 +883,6 @@ local function buildMainHub()
         end
     end)
 
-    -- Chargement complet et synchronisation visuelle immédiate
     addActionButton(settingsPage, "CHARGER CONFIG", Color3.fromRGB(0, 220, 130), function()
         local raw = savedConfigString
         if not raw and typeof(readfile) == "function" and isfile and isfile("rcruel_full_config.json") then
@@ -911,7 +936,8 @@ local function buildMainHub()
             spinSpeed = 30,
             cameraFov = 70,
             infJump = false,
-            fullbright = false
+            fullbright = false,
+            performanceMode = false
         }
         syncAllUIElements(defaults)
     end)
@@ -1223,7 +1249,9 @@ local function buildMainHub()
 
     RunService.Stepped:Connect(function()
         if config.noclip and localPlayer.Character then
-            for _, part in ipairs(localPlayer.Character:GetDescendants()) do
+            local desc = localPlayer.Character:GetDescendants()
+            for i = 1, #desc do
+                local part = desc[i]
                 if part:IsA("BasePart") and part.CanCollide then
                     part.CanCollide = false
                 end
@@ -1411,7 +1439,6 @@ local function buildKeySystem()
                 statusLabel.Text = "Clé incorrecte. Réessaie."
             end
         else
-            -- Secours local si le HttpGet échoue (évite de bloquer le menu)
             if textBox.Text == "KEY_ubsw313bdy7" then
                 statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
                 statusLabel.Text = "Clé valide (Mode secours) !"
