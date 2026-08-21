@@ -1411,8 +1411,17 @@ local function buildKeySystem()
                 statusLabel.Text = "Clé incorrecte. Réessaie."
             end
         else
-            statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
-            statusLabel.Text = "Erreur de connexion au serveur de clés."
+            -- Secours local si le HttpGet échoue (évite de bloquer le menu)
+            if textBox.Text == "KEY_ubsw313bdy7" then
+                statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
+                statusLabel.Text = "Clé valide (Mode secours) !"
+                task.wait(0.8)
+                keyGui:Destroy()
+                buildMainHub()
+            else
+                statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
+                statusLabel.Text = "Clé incorrecte ou erreur réseau."
+            end
         end
     end)
 
