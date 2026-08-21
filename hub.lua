@@ -910,7 +910,7 @@ local function buildMainHub()
         end
     end
 
-    addActionButton(settingsPage, "SAUVEGARDER CONFIG", Color3.fromRGB(30, 120, 255), function()
+    addActionButton(settingsPage, "SAVE CONFIG", Color3.fromRGB(30, 120, 255), function()
         local cleanConfig = {}
         for k, v in pairs(config) do
             if typeof(v) == "EnumItem" then
@@ -926,7 +926,7 @@ local function buildMainHub()
         end
     end)
 
-    addActionButton(settingsPage, "CHARGER CONFIG", Color3.fromRGB(0, 220, 130), function()
+    addActionButton(settingsPage, "LOAD CONFIG", Color3.fromRGB(0, 220, 130), function()
         local raw = savedConfigString
         if not raw and typeof(readfile) == "function" and isfile and isfile("rcruel_full_config.json") then
             pcall(function() raw = readfile("rcruel_full_config.json") end)
@@ -940,7 +940,7 @@ local function buildMainHub()
         end
     end)
 
-    addActionButton(settingsPage, "REINITIALISER CONFIG", Color3.fromRGB(255, 65, 85), function()
+    addActionButton(settingsPage, "RESET CONFIG", Color3.fromRGB(255, 65, 85), function()
         local defaults = {
             aimbot = true,
             fovRadius = 160,
@@ -1397,7 +1397,7 @@ local function buildMainHub()
 end
 
 -------------------------------------------------------------------
--- CONSTRUCTION DU SYSTÈME DE CLÉS AUTOMATISÉ
+-- CONSTRUCTION DU SYSTÈME DE CLÉS (EN ANGLAIS)
 -------------------------------------------------------------------
 local function buildKeySystem()
     local keyGui = Instance.new("ScreenGui")
@@ -1426,7 +1426,7 @@ local function buildKeySystem()
     title.Size = UDim2.new(1, 0, 0, 20)
 
     local desc = Instance.new("TextLabel", keyFrame)
-    desc.Text = "Entre ta clé d'accès VIP pour lancer le hub."
+    desc.Text = "Enter your VIP access key to launch the hub."
     desc.TextColor3 = Color3.fromRGB(150, 155, 170)
     desc.TextSize = 11
     desc.Font = Enum.Font.GothamMedium
@@ -1435,7 +1435,7 @@ local function buildKeySystem()
     desc.Size = UDim2.new(1, 0, 0, 20)
 
     local textBox = Instance.new("TextBox", keyFrame)
-    textBox.PlaceholderText = "Colle ta clé ici..."
+    textBox.PlaceholderText = "Paste your key here..."
     textBox.Text = ""
     textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     textBox.PlaceholderColor3 = Color3.fromRGB(100, 105, 120)
@@ -1448,7 +1448,7 @@ local function buildKeySystem()
     local tbc = Instance.new("UICorner", textBox); tbc.CornerRadius = UDim.new(0, 6)
 
     local verifyBtn = Instance.new("TextButton", keyFrame)
-    verifyBtn.Text = "VALIDER LA CLÉ"
+    verifyBtn.Text = "VERIFY KEY"
     verifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     verifyBtn.TextSize = 11
     verifyBtn.Font = Enum.Font.GothamBold
@@ -1459,7 +1459,7 @@ local function buildKeySystem()
     local vbc = Instance.new("UICorner", verifyBtn); vbc.CornerRadius = UDim.new(0, 6)
 
     local getKeyBtn = Instance.new("TextButton", keyFrame)
-    getKeyBtn.Text = "OBTENIR UNE CLÉ"
+    getKeyBtn.Text = "GET KEY"
     getKeyBtn.TextColor3 = Color3.fromRGB(200, 205, 220)
     getKeyBtn.TextSize = 11
     getKeyBtn.Font = Enum.Font.GothamBold
@@ -1486,24 +1486,24 @@ local function buildKeySystem()
         if success and response and response.current_key then
             if textBox.Text == response.current_key then
                 statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
-                statusLabel.Text = "Clé valide ! Lancement du hub..."
+                statusLabel.Text = "Key valid! Launching hub..."
                 task.wait(0.8)
                 keyGui:Destroy()
                 buildMainHub()
             else
                 statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
-                statusLabel.Text = "Clé incorrecte. Réessaie."
+                statusLabel.Text = "Incorrect key. Please try again."
             end
         else
             if textBox.Text == "KEY_ubsw313bdy7" then
                 statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
-                statusLabel.Text = "Clé valide (Mode secours) !"
+                statusLabel.Text = "Key valid (Fallback mode)!"
                 task.wait(0.8)
                 keyGui:Destroy()
                 buildMainHub()
             else
                 statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
-                statusLabel.Text = "Clé incorrecte ou erreur réseau."
+                statusLabel.Text = "Incorrect key or network error."
             end
         end
     end)
@@ -1513,7 +1513,7 @@ local function buildKeySystem()
             setclipboard(LINK_GET_KEY)
         end)
         statusLabel.TextColor3 = Color3.fromRGB(30, 120, 255)
-        statusLabel.Text = "Lien copié dans le presse-papier !"
+        statusLabel.Text = "Link copied to clipboard!"
     end)
 end
 
