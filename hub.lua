@@ -41,9 +41,9 @@ local colorPresets = {
 
 local hitSoundPresets = {
     {name = "CS:GO", id = "rbxassetid://4817809188"},
-    {name = "CoD MW", id = "rbxassetid://6613393977"},
-    {name = "Osu! Pop", id = "rbxassetid://3599518002"},
-    {name = "Bell", id = "rbxassetid://5332560814"}
+    {name = "Bubble", id = "rbxassetid://9114223173"},
+    {name = "Ding", id = "rbxassetid://6008779951"},
+    {name = "Plop", id = "rbxassetid://9060673422"}
 }
 
 local config = {
@@ -58,14 +58,10 @@ local config = {
     hitChance = 100,
     prediction = false,
     predictionLead = 0.08,
-    hitMarker = true,
-    hitSound = true,
-    hitSoundIndex = 1,
     wallCheck = true,
     teamCheck = false,
-    showFov = true,
-    fovFill = false,
-    fovThickness = 1.2,
+    
+    -- Weapons / Trigger
     triggerbot = false,
     triggerbotDelay = 0.05,
     lastTriggerShot = 0,
@@ -73,14 +69,20 @@ local config = {
     rapidFireDelay = 0.02,
     lastRapidShot = 0,
     autoReload = false,
-    crosshair = true,
 
     -- Visuals
     esp = false,
     espBoxes = false,
     espTracers = false,
     espColorIndex = 2,
+    showFov = true,
+    fovFill = false,
+    fovThickness = 1.2,
     fovColorIndex = 3,
+    crosshair = true,
+    hitMarker = true,
+    hitSound = true,
+    hitSoundIndex = 1,
     fpsCounter = true,
 
     -- Player & Movement
@@ -93,7 +95,6 @@ local config = {
     noclip = false,
     fly = false,
     flySpeed = 50,
-    cameraFov = 70,
     spinbot = false,
     spinSpeed = 30,
     fullbright = false,
@@ -269,7 +270,7 @@ end
 -------------------------------------------------------------------
 -- CONSTRUCTION DU HUB PRINCIPAL
 -------------------------------------------------------------------
-local visualsOverlay, screenGui, mainFrame, topBar, closeButton
+local visualsOverlay, screenGui, mainFrame, topBar, closeButton, hitMarkerGui
 
 local function buildMainHub()
     visualsOverlay = Instance.new("ScreenGui")
@@ -306,7 +307,7 @@ local function buildMainHub()
     fpsLabel.Size = UDim2.new(1, 0, 1, 0)
 
     -- Hit Marker Overlay
-    local hitMarkerGui = Instance.new("Frame", visualsOverlay)
+    hitMarkerGui = Instance.new("Frame", visualsOverlay)
     hitMarkerGui.Name = "HitMarkerGui"
     hitMarkerGui.AnchorPoint = Vector2.new(0.5, 0.5)
     hitMarkerGui.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -327,19 +328,6 @@ local function buildMainHub()
     end
     createHitLine(45)
     createHitLine(-45)
-
-    local function triggerHitMarker()
-        if not config.hitMarker then return end
-        hitMarkerGui.Visible = true
-        if config.hitSound then
-            hitAudio.SoundId = hitSoundPresets[config.hitSoundIndex].id
-            hitAudio:Play()
-        end
-        task.spawn(function()
-            task.wait(0.12)
-            hitMarkerGui.Visible = false
-        end)
-    end
 
     -- Cercle FOV
     local fovCircle = Instance.new("Frame", screenGui)
@@ -444,7 +432,7 @@ local function buildMainHub()
     contentArea.Size = UDim2.new(1, -175, 1, -62)
 
     -------------------------------------------------------------------
-    -- GESTION DES PAGES ET NAVIGATION
+    -- GESTION DES PAGES ET NAVIGATION (Menus réorganisés)
     -------------------------------------------------------------------
     local pages = {}
     local tabButtons = {}
@@ -469,6 +457,7 @@ local function buildMainHub()
     end
 
     local combatPage = createPage("Combat")
+    local weaponsPage = createPage("Weapons")
     local visualsPage = createPage("Visuals")
     local playerPage = createPage("Player")
     local settingsPage = createPage("Settings")
@@ -497,14 +486,14 @@ local function buildMainHub()
         btn.AutoButtonColor = false
         btn.BackgroundColor3 = Color3.fromRGB(26, 30, 39)
         btn.BorderSizePixel = 0
-        btn.Size = UDim2.new(1, 0, 0, 36)
+        btn.Size = UDim2.new(1, 0, 0, 32)
         local bc = Instance.new("UICorner", btn); bc.CornerRadius = UDim.new(0, 8)
 
         local lbl = Instance.new("TextLabel", btn)
         lbl.Name = "Label"
         lbl.Text = name
         lbl.TextColor3 = Color3.fromRGB(150, 155, 170)
-        lbl.TextSize = 12
+        lbl.TextSize = 11
         lbl.Font = Enum.Font.GothamMedium
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.BackgroundTransparency = 1
@@ -519,6 +508,7 @@ local function buildMainHub()
     end
 
     addTabButton("Combat")
+    addTabButton("Weapons")
     addTabButton("Visuals")
     addTabButton("Player")
     addTabButton("Settings")
@@ -836,23 +826,15 @@ local function buildMainHub()
     end
 
     -------------------------------------------------------------------
-    -- REMPLISSAGE DES PAGES
+    -- REMPLISSAGE DES PAGES (ORGANISATION PROPRE)
     -------------------------------------------------------------------
-    -- Combat
+    -- 1. Combat (Aimbot pur)
     addToggleSwitch(combatPage, "aimbot", "Aimbot Lock", function(v) end)
     addKeybindRow(combatPage, "Aim Key (Hold)")
     addDropdownPart(combatPage)
     addModernSlider(combatPage, "hitChance", "Hit Chance %", 1, 100, false, function(v) end)
     addToggleSwitch(combatPage, "prediction", "Auto-Prediction (Lead)", function(v) end)
     addModernSlider(combatPage, "smoothness", "Aimbot Smoothness", 0.05, 1.00, true, function(v) end)
-    addToggleSwitch(combatPage, "hitMarker", "Hit Marker Visual", function(v) end)
-    addToggleSwitch(combatPage, "hitSound", "Hit Marker Audio", function(v) end)
-    addHitSoundRow(combatPage, "hitSoundIndex", "Hit Sound Style")
-    addToggleSwitch(combatPage, "triggerbot", "Triggerbot", function(v) end)
-    addModernSlider(combatPage, "triggerbotDelay", "Triggerbot Delay", 0.01, 0.20, true, function(v) end)
-    addToggleSwitch(combatPage, "rapidFire", "Rapid Fire (Hold Click)", function(v) end)
-    addModernSlider(combatPage, "rapidFireDelay", "Rapid Fire Rate", 0.01, 0.15, true, function(v) end)
-    addToggleSwitch(combatPage, "autoReload", "Auto-Reload (Empty Mag)", function(v) end)
     addToggleSwitch(combatPage, "wallCheck", "Wallcheck", function(v) end)
     addToggleSwitch(combatPage, "teamCheck", "Team Check", function(v) setEspState(config.esp) end)
     addToggleSwitch(combatPage, "showFov", "Show FOV Circle", function(v) fovCircle.Visible = v end)
@@ -865,38 +847,44 @@ local function buildMainHub()
     addModernSlider(combatPage, "fovRadius", "FOV Size", 50, 400, false, function(v)
         fovCircle.Size = UDim2.new(0, v * 2, 0, v * 2)
     end)
-    addToggleSwitch(combatPage, "crosshair", "Custom Crosshair", function(v) crosshairCenter.Visible = v end)
+    addColorRow(combatPage, "fovColorIndex", "FOV Circle Color", function(idx, color)
+        fovStroke.Color = color
+        fovCircle.BackgroundColor3 = color
+    end)
 
-    -- Visuals
+    -- 2. Weapons (Triggerbot, Rapid Fire, Auto-Reload, Hit Feedback)
+    addToggleSwitch(weaponsPage, "triggerbot", "Triggerbot", function(v) end)
+    addModernSlider(weaponsPage, "triggerbotDelay", "Triggerbot Delay", 0.01, 0.20, true, function(v) end)
+    addToggleSwitch(weaponsPage, "rapidFire", "Rapid Fire (Hold Click)", function(v) end)
+    addModernSlider(weaponsPage, "rapidFireDelay", "Rapid Fire Rate", 0.01, 0.15, true, function(v) end)
+    addToggleSwitch(weaponsPage, "autoReload", "Auto-Reload", function(v) end)
+    addToggleSwitch(weaponsPage, "hitMarker", "Hit Marker Visual", function(v) end)
+    addToggleSwitch(weaponsPage, "hitSound", "Hit Marker Audio", function(v) end)
+    addHitSoundRow(weaponsPage, "hitSoundIndex", "Hit Sound Style")
+    addToggleSwitch(weaponsPage, "crosshair", "Custom Crosshair", function(v) crosshairCenter.Visible = v end)
+
+    -- 3. Visuals (ESP & Infos)
     addToggleSwitch(visualsPage, "esp", "ESP Highlights (Chams)", function(v) setEspState(v) end)
     addToggleSwitch(visualsPage, "espBoxes", "ESP 2D Boxes", function(v) end)
     addToggleSwitch(visualsPage, "espTracers", "ESP Snaplines (Tracers)", function(v) end)
     addColorRow(visualsPage, "espColorIndex", "ESP Color", function(idx, color) setEspState(config.esp) end)
-    addColorRow(visualsPage, "fovColorIndex", "FOV Circle Color", function(idx, color)
-        fovStroke.Color = color
-        fovCircle.BackgroundColor3 = color
-    end)
     addToggleSwitch(visualsPage, "fpsCounter", "FPS / Ping Display", function(v) fpsBadge.Visible = v end)
 
-    -- Player & World
-    addToggleSwitch(playerPage, "spinbot", "Spinbot", function(v) end)
-    addModernSlider(playerPage, "spinSpeed", "Spinbot Speed", 5, 100, false, function(v) end)
+    -- 4. Player (Mouvements & Fun)
     addToggleSwitch(playerPage, "walkSpeedEnabled", "Speed Hack (Bypass)", function(v) end)
     addModernSlider(playerPage, "walkSpeedValue", "Speed Multiplier", 16, 120, false, function(v) end)
     addToggleSwitch(playerPage, "jumpPowerEnabled", "High Jump Modifier", function(v) end)
     addModernSlider(playerPage, "jumpPowerValue", "Jump Power", 50, 250, false, function(v) end)
-    addToggleSwitch(playerPage, "antiVoid", "Anti-Void Fall Rescue", function(v) end)
-    addToggleSwitch(playerPage, "noclip", "NoClip (Wallpass)", function(v) end)
     addToggleSwitch(playerPage, "fly", "Fly Hack", function(v) if not v then updateFly() end end)
     addModernSlider(playerPage, "flySpeed", "Fly Speed", 20, 150, false, function(v) end)
-    addModernSlider(playerPage, "cameraFov", "Camera Field of View", 70, 120, false, function(v)
-        config.cameraFov = v
-        camera.FieldOfView = v
-    end)
+    addToggleSwitch(playerPage, "spinbot", "Spinbot", function(v) end)
+    addModernSlider(playerPage, "spinSpeed", "Spinbot Speed", 5, 100, false, function(v) end)
     addToggleSwitch(playerPage, "infJump", "Infinite Jump", function(v) end)
+    addToggleSwitch(playerPage, "antiVoid", "Anti-Void Fall Rescue", function(v) end)
+    addToggleSwitch(playerPage, "noclip", "NoClip (Wallpass)", function(v) end)
     addToggleSwitch(playerPage, "fullbright", "Fullbright", function(v) setFullbright(v) end)
 
-    -- Settings & Performance
+    -- 5. Settings (Performance & Configs)
     addToggleSwitch(settingsPage, "performanceMode", "Mode Performance (FPS Boost)", function(v) setPerformanceMode(v) end)
 
     local function addActionButton(parent, titleText, color, callback)
@@ -962,14 +950,14 @@ local function buildMainHub()
             prediction = false,
             wallCheck = true,
             teamCheck = false,
-            hitMarker = true,
-            hitSound = true,
-            hitSoundIndex = 1,
             triggerbot = false,
             triggerbotDelay = 0.05,
             rapidFire = false,
             rapidFireDelay = 0.02,
             autoReload = false,
+            hitMarker = true,
+            hitSound = true,
+            hitSoundIndex = 1,
             crosshair = true,
             showFov = true,
             fovFill = false,
@@ -984,14 +972,13 @@ local function buildMainHub()
             walkSpeedValue = 45,
             jumpPowerEnabled = false,
             jumpPowerValue = 50,
+            infJump = false,
             antiVoid = false,
             noclip = false,
             fly = false,
             flySpeed = 50,
             spinbot = false,
             spinSpeed = 30,
-            cameraFov = 70,
-            infJump = false,
             fullbright = false,
             performanceMode = false
         }
@@ -1037,8 +1024,25 @@ local function buildMainHub()
     end)
 
     -------------------------------------------------------------------
-    -- BOUCLES DU MOTEUR DE JEU
+    -- BOUCLES DU MOTEUR DE JEU & FEEDBACK ANTI-SPAM
     -------------------------------------------------------------------
+    local lastHitFeedback = 0
+    local function triggerHitMarker()
+        if not config.hitMarker then return end
+        if tick() - lastHitFeedback < 0.25 then return end -- Anti-spam sonore
+        lastHitFeedback = tick()
+
+        hitMarkerGui.Visible = true
+        if config.hitSound then
+            hitAudio.SoundId = hitSoundPresets[config.hitSoundIndex].id
+            hitAudio:Play()
+        end
+        task.spawn(function()
+            task.wait(0.12)
+            hitMarkerGui.Visible = false
+        end)
+    end
+
     RunService:BindToRenderStep("SableAimbotLock", Enum.RenderPriority.Camera.Value + 1, function()
         if config.aimbot and config.isAiming then
             if config.hitChance < 100 and math.random(1, 100) > config.hitChance then
@@ -1296,10 +1300,6 @@ local function buildMainHub()
             local root = localPlayer.Character.HumanoidRootPart
             spinAngle = (spinAngle + config.spinSpeed) % 360
             root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, math.rad(spinAngle), 0)
-        end
-
-        if camera.FieldOfView ~= config.cameraFov then
-            camera.FieldOfView = config.cameraFov
         end
     end)
 
