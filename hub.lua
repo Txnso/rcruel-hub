@@ -137,6 +137,7 @@ end
 local function isTeamMate(p)
     if not config.teamCheck then return false end
     if p == localPlayer then return true end
+    if not localPlayer.Team or not p.Team then return false end
     if p.Team and localPlayer.Team and p.Team == localPlayer.Team then return true end
     if p.TeamColor and localPlayer.TeamColor and p.TeamColor == localPlayer.TeamColor then return true end
     return false
@@ -161,16 +162,23 @@ local function getClosestTargetToCursor()
     local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= localPlayer and isPlayerAlive(p) and not isTeamMate(p) then
-            local part = p.Character:FindFirstChild(config.targetPart) or p.Character:FindFirstChild("Head")
-            if part then
-                local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
-                if onScreen then
-                    local screenVec = Vector2.new(screenPos.X, screenPos.Y)
-                    local dist = (screenCenter - screenVec).Magnitude
-                    if dist < shortestDist and isVisibleThroughWall(part) then
-                        shortestDist = dist
-                        bestTarget = p
+        if p ~= localPlayer and isPlayerAlive(p) then
+            local skip = false
+            if config.teamCheck and isTeamMate(p) then
+                skip = true
+            end
+
+            if not skip then
+                local part = p.Character:FindFirstChild(config.targetPart) or p.Character:FindFirstChild("Head")
+                if part then
+                    local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
+                    if onScreen then
+                        local screenVec = Vector2.new(screenPos.X, screenPos.Y)
+                        local dist = (screenCenter - screenVec).Magnitude
+                        if dist < shortestDist and isVisibleThroughWall(part) then
+                            shortestDist = dist
+                            bestTarget = p
+                        end
                     end
                 end
             end
@@ -436,7 +444,7 @@ local function buildMainHub()
     contentArea.Size = UDim2.new(1, -175, 1, -62)
 
     -------------------------------------------------------------------
-    -- GESTION DES PAGES ET NAVIGATION (Avec l'onglet Config séparé)
+    -- GESTION DES PAGES ET NAVIGATION
     -------------------------------------------------------------------
     local pages = {}
     local tabButtons = {}
