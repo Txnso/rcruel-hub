@@ -26,9 +26,9 @@ if oldOverlay then oldOverlay:Destroy() end
 -------------------------------------------------------------------
 -- CONFIGURATION GLOBALE & SYSTÈME DE CLÉS (MONÉTISATION)
 -------------------------------------------------------------------
-local KEY_SYSTEM_ENABLED = true -- Mets à false pour désactiver la clé pendant tes tests
-local VALID_KEY = "rcruel-vip-2026" -- La clé valide (tu pourras la changer ou l'automatiser plus tard)
-local LINK_GET_KEY = "https://link-target.net/your-link" -- Ton lien de redirection publicitaire (ex: Work.ink / Loot-Link)
+local KEY_SYSTEM_ENABLED = true 
+local KEY_URL = "https://raw.githubusercontent.com/Txnso/rcruel-hub/refs/heads/main/key.json" -- Mets ton vrai lien Raw GitHub de ton fichier key.json
+local LINK_GET_KEY = "https://work.ink/2SIn/rcruel-key" -- Ton lien Work.ink que tu as créé avec ton image précédente
 
 local colorPresets = {
     {name = "Vert", color = Color3.fromRGB(0, 220, 130)},
@@ -1395,7 +1395,12 @@ local function buildKeySystem()
     statusLabel.Size = UDim2.new(1, 0, 0, 20)
 
     verifyBtn.MouseButton1Click:Connect(function()
-        if textBox.Text == VALID_KEY then
+    local success, response = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(KEY_URL))
+    end)
+    
+    if success and response and response.current_key then
+        if textBox.Text == response.current_key then
             statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
             statusLabel.Text = "Clé valide ! Lancement du hub..."
             task.wait(0.8)
@@ -1405,16 +1410,11 @@ local function buildKeySystem()
             statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
             statusLabel.Text = "Clé incorrecte. Réessaie."
         end
-    end)
-
-    getKeyBtn.MouseButton1Click:Connect(function()
-        pcall(function()
-            setclipboard(LINK_GET_KEY)
-        end)
-        statusLabel.TextColor3 = Color3.fromRGB(30, 120, 255)
-        statusLabel.Text = "Lien copié dans le presse-papier !"
-    end)
-end
+    else
+        statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
+        statusLabel.Text = "Erreur de connexion au serveur de clés."
+    end
+end)
 
 -------------------------------------------------------------------
 -- POINT D'ENTRÉE DU SCRIPT
