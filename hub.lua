@@ -39,6 +39,13 @@ local colorPresets = {
     {name = "Blanc", color = Color3.fromRGB(255, 255, 255)}
 }
 
+local hitSoundPresets = {
+    {name = "CS:GO", id = "rbxassetid://4817809188"},
+    {name = "CoD MW", id = "rbxassetid://6613393977"},
+    {name = "Osu! Pop", id = "rbxassetid://3599518002"},
+    {name = "Bell", id = "rbxassetid://5332560814"}
+}
+
 local config = {
     -- Combat
     aimbot = true,
@@ -53,6 +60,7 @@ local config = {
     predictionLead = 0.08,
     hitMarker = true,
     hitSound = true,
+    hitSoundIndex = 1,
     wallCheck = true,
     teamCheck = false,
     showFov = true,
@@ -104,15 +112,14 @@ local originalLighting = {
     ClockTime = Lighting.ClockTime,
     FogEnd = Lighting.FogEnd,
     GlobalShadows = Lighting.GlobalShadows,
-    Ambient = Lighting.Ambient,
-    OutdoorAmbient = Lighting.OutdoorAmbient
+    Ambient = Lighting.Ambient
 }
 
 -------------------------------------------------------------------
 -- MOTEUR AUDIO & FEEDBACK
 -------------------------------------------------------------------
 local hitAudio = Instance.new("Sound")
-hitAudio.SoundId = "rbxassetid://4817809188"
+hitAudio.SoundId = hitSoundPresets[config.hitSoundIndex].id
 hitAudio.Volume = 1
 hitAudio.Parent = SoundService
 
@@ -195,7 +202,6 @@ local function setFullbright(active)
     end
 end
 
--- Gestion du Mode Performance (FPS Boost)
 local function setPerformanceMode(active)
     if active then
         Lighting.GlobalShadows = false
@@ -325,7 +331,10 @@ local function buildMainHub()
     local function triggerHitMarker()
         if not config.hitMarker then return end
         hitMarkerGui.Visible = true
-        if config.hitSound then hitAudio:Play() end
+        if config.hitSound then
+            hitAudio.SoundId = hitSoundPresets[config.hitSoundIndex].id
+            hitAudio:Play()
+        end
         task.spawn(function()
             task.wait(0.12)
             hitMarkerGui.Visible = false
@@ -784,6 +793,48 @@ local function buildMainHub()
         end
     end
 
+    local function addHitSoundRow(parent, configKey, titleText)
+        local row = Instance.new("Frame", parent)
+        row.BackgroundColor3 = Color3.fromRGB(22, 25, 33)
+        row.BorderSizePixel = 0
+        row.Size = UDim2.new(1, 0, 0, 36)
+        local rc = Instance.new("UICorner", row); rc.CornerRadius = UDim.new(0, 6)
+
+        local lbl = Instance.new("TextLabel", row)
+        lbl.Text = titleText
+        lbl.TextColor3 = Color3.fromRGB(220, 222, 230)
+        lbl.TextSize = 11
+        lbl.Font = Enum.Font.GothamMedium
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.BackgroundTransparency = 1
+        lbl.Position = UDim2.new(0, 12, 0, 0)
+        lbl.Size = UDim2.new(0.6, 0, 1, 0)
+
+        local btn = Instance.new("TextButton", row)
+        btn.Text = hitSoundPresets[config[configKey]].name
+        btn.TextColor3 = Color3.fromRGB(210, 215, 225)
+        btn.TextSize = 10
+        btn.Font = Enum.Font.GothamBold
+        btn.BackgroundColor3 = Color3.fromRGB(28, 32, 42)
+        btn.BorderSizePixel = 0
+        btn.Position = UDim2.new(1, -85, 0.5, -11)
+        btn.Size = UDim2.new(0, 75, 0, 22)
+        local bc = Instance.new("UICorner", btn); bc.CornerRadius = UDim.new(0, 5)
+
+        btn.MouseButton1Click:Connect(function()
+            config[configKey] = (config[configKey] % #hitSoundPresets) + 1
+            btn.Text = hitSoundPresets[config[configKey]].name
+            hitAudio.SoundId = hitSoundPresets[config[configKey]].id
+            hitAudio:Play()
+        end)
+
+        uiUpdaters[configKey] = function(idx)
+            config[configKey] = idx
+            btn.Text = hitSoundPresets[idx].name
+            hitAudio.SoundId = hitSoundPresets[idx].id
+        end
+    end
+
     -------------------------------------------------------------------
     -- REMPLISSAGE DES PAGES
     -------------------------------------------------------------------
@@ -796,6 +847,7 @@ local function buildMainHub()
     addModernSlider(combatPage, "smoothness", "Aimbot Smoothness", 0.05, 1.00, true, function(v) end)
     addToggleSwitch(combatPage, "hitMarker", "Hit Marker Visual", function(v) end)
     addToggleSwitch(combatPage, "hitSound", "Hit Marker Audio", function(v) end)
+    addHitSoundRow(combatPage, "hitSoundIndex", "Hit Sound Style")
     addToggleSwitch(combatPage, "triggerbot", "Triggerbot", function(v) end)
     addModernSlider(combatPage, "triggerbotDelay", "Triggerbot Delay", 0.01, 0.20, true, function(v) end)
     addToggleSwitch(combatPage, "rapidFire", "Rapid Fire (Hold Click)", function(v) end)
@@ -837,7 +889,10 @@ local function buildMainHub()
     addToggleSwitch(playerPage, "noclip", "NoClip (Wallpass)", function(v) end)
     addToggleSwitch(playerPage, "fly", "Fly Hack", function(v) if not v then updateFly() end end)
     addModernSlider(playerPage, "flySpeed", "Fly Speed", 20, 150, false, function(v) end)
-    addModernSlider(playerPage, "cameraFov", "Camera Field of View", 70, 120, false, function(v) end)
+    addModernSlider(playerPage, "cameraFov", "Camera Field of View", 70, 120, false, function(v)
+        config.cameraFov = v
+        camera.FieldOfView = v
+    end)
     addToggleSwitch(playerPage, "infJump", "Infinite Jump", function(v) end)
     addToggleSwitch(playerPage, "fullbright", "Fullbright", function(v) setFullbright(v) end)
 
@@ -909,6 +964,7 @@ local function buildMainHub()
             teamCheck = false,
             hitMarker = true,
             hitSound = true,
+            hitSoundIndex = 1,
             triggerbot = false,
             triggerbotDelay = 0.05,
             rapidFire = false,
