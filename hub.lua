@@ -27,8 +27,8 @@ if oldOverlay then oldOverlay:Destroy() end
 -- CONFIGURATION GLOBALE & SYSTÈME DE CLÉS (MONÉTISATION)
 -------------------------------------------------------------------
 local KEY_SYSTEM_ENABLED = true 
-local KEY_URL = "https://raw.githubusercontent.com/Txnso/rcruel-hub/refs/heads/main/key.json" -- Mets ton vrai lien Raw GitHub de ton fichier key.json
-local LINK_GET_KEY = "https://work.ink/2SIn/rcruel-key" -- Ton lien Work.ink que tu as créé avec ton image précédente
+local KEY_URL = "https://raw.githubusercontent.com/Txnso/rcruel-hub/refs/heads/main/key.json"
+local LINK_GET_KEY = "https://work.ink/2SIn/rcruel-key"
 
 local colorPresets = {
     {name = "Vert", color = Color3.fromRGB(0, 220, 130)},
@@ -1313,7 +1313,7 @@ local function buildMainHub()
 end
 
 -------------------------------------------------------------------
--- CONSTRUCTION DU SYSTÈMES DE CLÉS
+-- CONSTRUCTION DU SYSTÈME DE CLÉS AUTOMATISÉ
 -------------------------------------------------------------------
 local function buildKeySystem()
     local keyGui = Instance.new("ScreenGui")
@@ -1395,26 +1395,35 @@ local function buildKeySystem()
     statusLabel.Size = UDim2.new(1, 0, 0, 20)
 
     verifyBtn.MouseButton1Click:Connect(function()
-    local success, response = pcall(function()
-        return HttpService:JSONDecode(game:HttpGet(KEY_URL))
-    end)
-    
-    if success and response and response.current_key then
-        if textBox.Text == response.current_key then
-            statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
-            statusLabel.Text = "Clé valide ! Lancement du hub..."
-            task.wait(0.8)
-            keyGui:Destroy()
-            buildMainHub()
+        local success, response = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet(KEY_URL))
+        end)
+        
+        if success and response and response.current_key then
+            if textBox.Text == response.current_key then
+                statusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
+                statusLabel.Text = "Clé valide ! Lancement du hub..."
+                task.wait(0.8)
+                keyGui:Destroy()
+                buildMainHub()
+            else
+                statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
+                statusLabel.Text = "Clé incorrecte. Réessaie."
+            end
         else
             statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
-            statusLabel.Text = "Clé incorrecte. Réessaie."
+            statusLabel.Text = "Erreur de connexion au serveur de clés."
         end
-    else
-        statusLabel.TextColor3 = Color3.fromRGB(255, 65, 85)
-        statusLabel.Text = "Erreur de connexion au serveur de clés."
-    end
-end)
+    end)
+
+    getKeyBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            setclipboard(LINK_GET_KEY)
+        end)
+        statusLabel.TextColor3 = Color3.fromRGB(30, 120, 255)
+        statusLabel.Text = "Lien copié dans le presse-papier !"
+    end)
+end
 
 -------------------------------------------------------------------
 -- POINT D'ENTRÉE DU SCRIPT
