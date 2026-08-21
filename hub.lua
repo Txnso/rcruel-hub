@@ -8,6 +8,7 @@ local Stats = game:GetService("Stats")
 local HttpService = game:GetService("HttpService")
 local SoundService = game:GetService("SoundService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local StarterGui = game:GetService("StarterGui")
 
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
@@ -29,6 +30,7 @@ if oldOverlay then oldOverlay:Destroy() end
 local KEY_SYSTEM_ENABLED = true 
 local KEY_URL = "https://raw.githubusercontent.com/Txnso/rcruel-hub/refs/heads/main/key.json"
 local LINK_GET_KEY = "https://work.ink/2SIn/rcruel-key"
+local DISCORD_INVITE = "https://discord.gg/B4wGUuJFK6"
 
 local colorPresets = {
     {name = "Vert", color = Color3.fromRGB(0, 220, 130)},
@@ -125,7 +127,7 @@ hitAudio.Volume = 1
 hitAudio.Parent = SoundService
 
 -------------------------------------------------------------------
--- FONCTIONS DU MOTEUR
+-- FONCTIONS DU MOTEUR (CORRECTION TEAM CHECK)
 -------------------------------------------------------------------
 local function isPlayerAlive(p)
     if not p or not p.Character then return false end
@@ -135,7 +137,29 @@ end
 
 local function isTeamMate(p)
     if not config.teamCheck then return false end
-    return p.Team and localPlayer.Team and p.Team == localPlayer.Team
+    if p == localPlayer then return true end
+    
+    -- Vérification par l'équipe native Roblox
+    if p.Team and localPlayer.Team and p.Team == localPlayer.Team then
+        return true
+    end
+    
+    -- Vérification alternative via les couleurs de Team (souvent utilisée dans les jeux de tir)
+    if p.TeamColor and localPlayer.TeamColor and p.TeamColor == localPlayer.TeamColor then
+        return true
+    end
+
+    -- Vérification par attributs de couleur de character si l'équipe native est neutre
+    if p.Character and localPlayer.Character then
+        local myRoot = localPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local pRoot = p.Character:FindFirstChild("HumanoidRootPart")
+        if myRoot and pRoot then
+            -- Si les briques ou team color s'accordent
+            if p.TeamColor == localPlayer.TeamColor then return true end
+        end
+    end
+
+    return false
 end
 
 local function isVisibleThroughWall(targetPart)
@@ -432,7 +456,7 @@ local function buildMainHub()
     contentArea.Size = UDim2.new(1, -175, 1, -62)
 
     -------------------------------------------------------------------
-    -- GESTION DES PAGES ET NAVIGATION (Menus réorganisés)
+    -- GESTION DES PAGES ET NAVIGATION
     -------------------------------------------------------------------
     local pages = {}
     local tabButtons = {}
@@ -826,9 +850,8 @@ local function buildMainHub()
     end
 
     -------------------------------------------------------------------
-    -- REMPLISSAGE DES PAGES (ORGANISATION PROPRE)
+    -- REMPLISSAGE DES PAGES
     -------------------------------------------------------------------
-    -- 1. Combat (Aimbot pur)
     addToggleSwitch(combatPage, "aimbot", "Aimbot Lock", function(v) end)
     addKeybindRow(combatPage, "Aim Key (Hold)")
     addDropdownPart(combatPage)
@@ -852,7 +875,6 @@ local function buildMainHub()
         fovCircle.BackgroundColor3 = color
     end)
 
-    -- 2. Weapons (Triggerbot, Rapid Fire, Auto-Reload, Hit Feedback)
     addToggleSwitch(weaponsPage, "triggerbot", "Triggerbot", function(v) end)
     addModernSlider(weaponsPage, "triggerbotDelay", "Triggerbot Delay", 0.01, 0.20, true, function(v) end)
     addToggleSwitch(weaponsPage, "rapidFire", "Rapid Fire (Hold Click)", function(v) end)
@@ -863,14 +885,12 @@ local function buildMainHub()
     addHitSoundRow(weaponsPage, "hitSoundIndex", "Hit Sound Style")
     addToggleSwitch(weaponsPage, "crosshair", "Custom Crosshair", function(v) crosshairCenter.Visible = v end)
 
-    -- 3. Visuals (ESP & Infos)
     addToggleSwitch(visualsPage, "esp", "ESP Highlights (Chams)", function(v) setEspState(v) end)
     addToggleSwitch(visualsPage, "espBoxes", "ESP 2D Boxes", function(v) end)
     addToggleSwitch(visualsPage, "espTracers", "ESP Snaplines (Tracers)", function(v) end)
     addColorRow(visualsPage, "espColorIndex", "ESP Color", function(idx, color) setEspState(config.esp) end)
     addToggleSwitch(visualsPage, "fpsCounter", "FPS / Ping Display", function(v) fpsBadge.Visible = v end)
 
-    -- 4. Player (Mouvements & Fun)
     addToggleSwitch(playerPage, "walkSpeedEnabled", "Speed Hack (Bypass)", function(v) end)
     addModernSlider(playerPage, "walkSpeedValue", "Speed Multiplier", 16, 120, false, function(v) end)
     addToggleSwitch(playerPage, "jumpPowerEnabled", "High Jump Modifier", function(v) end)
@@ -884,7 +904,6 @@ local function buildMainHub()
     addToggleSwitch(playerPage, "noclip", "NoClip (Wallpass)", function(v) end)
     addToggleSwitch(playerPage, "fullbright", "Fullbright", function(v) setFullbright(v) end)
 
-    -- 5. Settings (Performance & Configs)
     addToggleSwitch(settingsPage, "performanceMode", "Mode Performance (FPS Boost)", function(v) setPerformanceMode(v) end)
 
     local function addActionButton(parent, titleText, color, callback)
@@ -1029,7 +1048,7 @@ local function buildMainHub()
     local lastHitFeedback = 0
     local function triggerHitMarker()
         if not config.hitMarker then return end
-        if tick() - lastHitFeedback < 0.25 then return end -- Anti-spam sonore
+        if tick() - lastHitFeedback < 0.25 then return end
         lastHitFeedback = tick()
 
         hitMarkerGui.Visible = true
@@ -1397,7 +1416,7 @@ local function buildMainHub()
 end
 
 -------------------------------------------------------------------
--- CONSTRUCTION DU SYSTÈME DE CLÉS (EN ANGLAIS)
+-- CONSTRUCTION DU SYSTÈME DE CLÉS (MODIFIÉ : TOUT EN ANGLAIS + DISCORD)
 -------------------------------------------------------------------
 local function buildKeySystem()
     local keyGui = Instance.new("ScreenGui")
@@ -1412,7 +1431,7 @@ local function buildKeySystem()
     keyFrame.BorderSizePixel = 0
     keyFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     keyFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    keyFrame.Size = UDim2.new(0, 380, 0, 220)
+    keyFrame.Size = UDim2.new(0, 380, 0, 260) -- Agrandit légèrement pour loger le 3e bouton
     local kfc = Instance.new("UICorner", keyFrame); kfc.CornerRadius = UDim.new(0, 10)
     local kfs = Instance.new("UIStroke", keyFrame); kfs.Color = Color3.fromRGB(38, 44, 58); kfs.Thickness = 1.5
 
@@ -1443,10 +1462,11 @@ local function buildKeySystem()
     textBox.Font = Enum.Font.GothamMedium
     textBox.BackgroundColor3 = Color3.fromRGB(22, 25, 33)
     textBox.BorderSizePixel = 0
-    textBox.Position = UDim2.new(0, 24, 0, 80)
-    textBox.Size = UDim2.new(1, -48, 0, 38)
+    textBox.Position = UDim2.new(0, 24, 0, 76)
+    textBox.Size = UDim2.new(1, -48, 0, 36)
     local tbc = Instance.new("UICorner", textBox); tbc.CornerRadius = UDim.new(0, 6)
 
+    -- Bouton 1 : Vérifier la clé
     local verifyBtn = Instance.new("TextButton", keyFrame)
     verifyBtn.Text = "VERIFY KEY"
     verifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1454,10 +1474,11 @@ local function buildKeySystem()
     verifyBtn.Font = Enum.Font.GothamBold
     verifyBtn.BackgroundColor3 = Color3.fromRGB(30, 120, 255)
     verifyBtn.BorderSizePixel = 0
-    verifyBtn.Position = UDim2.new(0, 24, 0, 132)
-    verifyBtn.Size = UDim2.new(0.5, -28, 0, 36)
+    verifyBtn.Position = UDim2.new(0, 24, 0, 124)
+    verifyBtn.Size = UDim2.new(0.5, -28, 0, 32)
     local vbc = Instance.new("UICorner", verifyBtn); vbc.CornerRadius = UDim.new(0, 6)
 
+    -- Bouton 2 : Obtenir la clé
     local getKeyBtn = Instance.new("TextButton", keyFrame)
     getKeyBtn.Text = "GET KEY"
     getKeyBtn.TextColor3 = Color3.fromRGB(200, 205, 220)
@@ -1465,9 +1486,21 @@ local function buildKeySystem()
     getKeyBtn.Font = Enum.Font.GothamBold
     getKeyBtn.BackgroundColor3 = Color3.fromRGB(26, 30, 39)
     getKeyBtn.BorderSizePixel = 0
-    getKeyBtn.Position = UDim2.new(0.5, 4, 0, 132)
-    getKeyBtn.Size = UDim2.new(0.5, -28, 0, 36)
+    getKeyBtn.Position = UDim2.new(0.5, 4, 0, 124)
+    getKeyBtn.Size = UDim2.new(0.5, -28, 0, 32)
     local gbc = Instance.new("UICorner", getKeyBtn); gbc.CornerRadius = UDim.new(0, 6)
+
+    -- Bouton 3 : Rejoindre le Discord
+    local discordBtn = Instance.new("TextButton", keyFrame)
+    discordBtn.Text = "JOIN DISCORD"
+    discordBtn.TextColor3 = Color3.fromRGB(114, 137, 218)
+    discordBtn.TextSize = 11
+    discordBtn.Font = Enum.Font.GothamBold
+    discordBtn.BackgroundColor3 = Color3.fromRGB(26, 30, 39)
+    discordBtn.BorderSizePixel = 0
+    discordBtn.Position = UDim2.new(0, 24, 0, 164)
+    discordBtn.Size = UDim2.new(1, -48, 0, 32)
+    local dbc = Instance.new("UICorner", discordBtn); dbc.CornerRadius = UDim.new(0, 6)
 
     local statusLabel = Instance.new("TextLabel", keyFrame)
     statusLabel.Text = ""
@@ -1475,7 +1508,7 @@ local function buildKeySystem()
     statusLabel.TextSize = 11
     statusLabel.Font = Enum.Font.GothamMedium
     statusLabel.BackgroundTransparency = 1
-    statusLabel.Position = UDim2.new(0, 0, 0, 178)
+    statusLabel.Position = UDim2.new(0, 0, 0, 206)
     statusLabel.Size = UDim2.new(1, 0, 0, 20)
 
     verifyBtn.MouseButton1Click:Connect(function()
@@ -1514,6 +1547,14 @@ local function buildKeySystem()
         end)
         statusLabel.TextColor3 = Color3.fromRGB(30, 120, 255)
         statusLabel.Text = "Link copied to clipboard!"
+    end)
+
+    discordBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            setclipboard(DISCORD_INVITE)
+        end)
+        statusLabel.TextColor3 = Color3.fromRGB(114, 137, 218)
+        statusLabel.Text = "Discord invite copied to clipboard!"
     end)
 end
 
